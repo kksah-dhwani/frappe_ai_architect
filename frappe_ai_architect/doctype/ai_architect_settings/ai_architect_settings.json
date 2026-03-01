@@ -1,0 +1,195 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "creation": "2025-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "api_config_tab",
+        "setup_status_section",
+        "is_setup_complete",
+        "setup_html",
+        "api_section",
+        "api_key",
+        "cb_api_1",
+        "model",
+        "temperature",
+        "max_tokens",
+        "failover_tab",
+        "failover_html",
+        "api_key_2",
+        "cb_fail_1",
+        "api_key_3",
+        "safety_tab",
+        "safety_mode",
+        "auto_backup",
+        "cb_safety_1",
+        "allowed_roles_section",
+        "allowed_roles",
+        "help_tab",
+        "help_html"
+    ],
+    "fields": [
+        {
+            "fieldname": "api_config_tab",
+            "fieldtype": "Tab Break",
+            "label": "API Configuration"
+        },
+        {
+            "fieldname": "setup_status_section",
+            "fieldtype": "Section Break",
+            "label": "Setup Status"
+        },
+        {
+            "default": "0",
+            "fieldname": "is_setup_complete",
+            "fieldtype": "Check",
+            "hidden": 1,
+            "label": "Setup Complete",
+            "read_only": 1
+        },
+        {
+            "depends_on": "eval:!doc.is_setup_complete",
+            "fieldname": "setup_html",
+            "fieldtype": "HTML",
+            "label": "Setup Guide",
+            "options": "<div class='alert alert-warning' style='border-left:4px solid #f39c12;padding:16px;border-radius:8px;margin:8px 0'><h4 style='margin:0 0 8px'>🚀 Welcome! Setup in 3 Easy Steps</h4><ol style='margin:8px 0;padding-left:20px'><li style='margin:6px 0'><b>Get Free API Key:</b> Go to <a href='https://aistudio.google.com/apikey' target='_blank' style='color:#6C5CE7;font-weight:600'>Google AI Studio ↗</a> → Click \"Create API Key\" → Copy</li><li style='margin:6px 0'><b>Paste Below:</b> Paste your key in the \"Primary API Key\" field</li><li style='margin:6px 0'><b>Save:</b> Click Save → Done! 🎉</li></ol><p style='margin:8px 0 0;color:#666;font-size:12px'>✅ Free: 15 req/min, 1500/day — no credit card needed<br>🔒 Keys stored securely as encrypted password fields</p></div>"
+        },
+        {
+            "fieldname": "api_section",
+            "fieldtype": "Section Break",
+            "label": "Gemini API"
+        },
+        {
+            "fieldname": "api_key",
+            "fieldtype": "Password",
+            "label": "Primary API Key",
+            "reqd": 1,
+            "description": "Get free key from <a href='https://aistudio.google.com/apikey' target='_blank'>Google AI Studio</a>"
+        },
+        {
+            "fieldname": "cb_api_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "default": "gemini-2.5-flash",
+            "fieldname": "model",
+            "fieldtype": "Data",
+            "label": "AI Model",
+            "read_only": 1,
+            "description": "Fixed: gemini-2.5-flash (fast + accurate)"
+        },
+        {
+            "default": "0.1",
+            "fieldname": "temperature",
+            "fieldtype": "Float",
+            "label": "Temperature",
+            "description": "0.0 = Precise, 1.0 = Creative (0.1 recommended)",
+            "precision": "2"
+        },
+        {
+            "default": "8192",
+            "fieldname": "max_tokens",
+            "fieldtype": "Int",
+            "label": "Max Output Tokens",
+            "description": "Maximum response length (8192 recommended)"
+        },
+        {
+            "fieldname": "failover_tab",
+            "fieldtype": "Tab Break",
+            "label": "API Key Failover"
+        },
+        {
+            "fieldname": "failover_html",
+            "fieldtype": "HTML",
+            "label": "Failover Info",
+            "options": "<div class='alert alert-info' style='border-radius:8px;padding:12px'><b>🔄 How Failover Works</b><br>Add multiple API keys below. When one key's quota is exhausted (rate limit / daily limit), the system <b>automatically switches</b> to the next key.<br><br><b>Tip:</b> Create 2-3 free API keys from different Google accounts for uninterrupted service.<br><b>Priority:</b> Primary Key → Failover Key 2 → Failover Key 3 → site_config.json GEMINI_API_KEY</div>"
+        },
+        {
+            "fieldname": "api_key_2",
+            "fieldtype": "Password",
+            "label": "Failover API Key 2 (Optional)",
+            "description": "Used when primary key's quota is exhausted"
+        },
+        {
+            "fieldname": "cb_fail_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "api_key_3",
+            "fieldtype": "Password",
+            "label": "Failover API Key 3 (Optional)",
+            "description": "Used when key 1 & 2 both exhausted"
+        },
+        {
+            "fieldname": "safety_tab",
+            "fieldtype": "Tab Break",
+            "label": "Safety & Access"
+        },
+        {
+            "default": "1",
+            "fieldname": "safety_mode",
+            "fieldtype": "Check",
+            "label": "Safety Mode (confirm before destructive operations)"
+        },
+        {
+            "default": "1",
+            "fieldname": "auto_backup",
+            "fieldtype": "Check",
+            "label": "Auto Backup (snapshot before every operation)"
+        },
+        {
+            "fieldname": "cb_safety_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "allowed_roles_section",
+            "fieldtype": "Section Break",
+            "label": "Who Can Use AI Architect?"
+        },
+        {
+            "default": "System Manager\nAdministrator",
+            "fieldname": "allowed_roles",
+            "fieldtype": "Small Text",
+            "label": "Allowed Roles (one per line)",
+            "description": "Only these roles can access AI Architect"
+        },
+        {
+            "fieldname": "help_tab",
+            "fieldtype": "Tab Break",
+            "label": "Help"
+        },
+        {
+            "fieldname": "help_html",
+            "fieldtype": "HTML",
+            "label": "Help",
+            "options": "<div style='padding:16px;background:#f8f9fa;border-radius:8px'><h4>📖 How to Use</h4><p>After saving your API key, go to: <b><a href='/ai-architect'>/ai-architect</a></b></p><p>Or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> from anywhere in Frappe.</p><h5 style='margin-top:16px'>Example Commands:</h5><ul><li><code>Create a DocType \"Task\" with fields: title, assigned_to, priority, due_date</code></li><li><code>Add a currency field \"budget\" to Project</code></li><li><code>Create a workflow for Leave Application: Draft → Approved → Rejected</code></li></ul><h5 style='margin-top:16px'>Troubleshooting:</h5><ul><li><b>Quota exceeded?</b> Add more keys in \"API Key Failover\" tab</li><li><b>Invalid key?</b> Check at <a href='https://aistudio.google.com/apikey' target='_blank'>Google AI Studio</a></li><li><b>Permission error?</b> Check \"Allowed Roles\" in Safety tab</li></ul></div>"
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "issingle": 1,
+    "links": [],
+    "modified": "2025-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Frappe AI Architect",
+    "name": "AI Architect Settings",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "read": 1,
+            "role": "System Manager",
+            "write": 1
+        },
+        {
+            "create": 1,
+            "read": 1,
+            "role": "Administrator",
+            "write": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 0
+}

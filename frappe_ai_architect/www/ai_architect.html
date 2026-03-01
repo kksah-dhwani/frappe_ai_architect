@@ -1,0 +1,355 @@
+{% extends "templates/web.html" %}
+{% block title %}AI Architect{% endblock %}
+
+{% block page_content %}
+<div id="ai-app">
+<div class="ai-wrapper">
+    <div class="ai-header">
+        <div class="ai-header-left">
+            <span style="font-size:28px">🧠</span>
+            <div>
+                <h3 class="ai-title">Frappe AI Architect</h3>
+                <small class="ai-sub">Powered by Gemini 2.5 Flash</small>
+            </div>
+        </div>
+        <div class="ai-header-right">
+            <button class="btn btn-xs btn-default" onclick="aiApp.showHistory()">📜 History</button>
+            <button class="btn btn-xs btn-default" onclick="aiApp.showSiteInfo()">ℹ️ Info</button>
+            <a href="/app/ai-architect-settings" class="btn btn-xs btn-default">⚙️ Settings</a>
+        </div>
+    </div>
+
+    <div class="ai-chips">
+        <button class="chip" onclick="aiApp.set('Create a new DocType called ')">🏗️ DocType</button>
+        <button class="chip" onclick="aiApp.set('Add field to ')">➕ Field</button>
+        <button class="chip" onclick="aiApp.set('Create a workflow for ')">⚙️ Workflow</button>
+        <button class="chip" onclick="aiApp.set('Analyze schema of ')">🔍 Analyze</button>
+        <button class="chip" onclick="aiApp.set('Create a report for ')">📊 Report</button>
+        <button class="chip" onclick="aiApp.set('Set permissions for ')">🔐 Permissions</button>
+        <button class="chip" onclick="aiApp.set('Generate code for ')">👨‍💻 Code</button>
+        <button class="chip" onclick="aiApp.set('Explain DocType ')">💡 Explain</button>
+    </div>
+
+    <div class="ai-chat" id="ai-chat">
+        <div class="ai-msg ai-bot">
+            <div class="ai-av">🧠</div>
+            <div class="ai-bub">
+                <b>Namaste! Main hoon Frappe AI Architect.</b><br>
+                Natural language me batao kya karna hai — DocType create karo, fields add karo, workflow setup karo, ya kuch bhi! 🚀
+                <div class="ai-examples">
+                    <code onclick="aiApp.set(this.innerText)">Create a DocType "Project Task" with fields: task_name (Data, required), assigned_to (Link to User), priority (Select: Low/Medium/High), due_date (Date), status (Select: Open/In Progress/Done)</code>
+                    <code onclick="aiApp.set(this.innerText)">Add a currency field "budget" to DocType "Project"</code>
+                    <code onclick="aiApp.set(this.innerText)">Create a workflow for Leave Application: Draft → Pending → Approved</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ai-input-area">
+        <div class="ai-input-row">
+            <textarea id="ai-input" rows="2"
+                placeholder="Type your command... (e.g., Create a DocType for tracking invoices)"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiApp.send()}"></textarea>
+            <button class="ai-send" onclick="aiApp.send()" id="ai-send">🚀 Execute</button>
+        </div>
+        <div class="ai-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</div>
+    </div>
+</div>
+
+<div id="ai-modal" class="ai-modal" style="display:none">
+    <div class="ai-modal-box">
+        <h4>⚠️ Confirmation Required</h4>
+        <div id="ai-modal-body"></div>
+        <div class="ai-modal-btns">
+            <button class="btn btn-danger" onclick="aiApp.confirmExec()">✅ Confirm & Execute</button>
+            <button class="btn btn-default" onclick="aiApp.cancelConfirm()">❌ Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="ai-setup-modal" class="ai-modal" style="display:none">
+    <div class="ai-modal-box ai-setup-box">
+        <div style="text-align:center;margin-bottom:16px">
+            <span style="font-size:48px">🧠</span>
+            <h3 style="margin:8px 0 4px">Welcome to AI Architect!</h3>
+            <p style="color:#666;margin:0">Setup takes 2 minutes — just get a free API key and paste below.</p>
+        </div>
+        <div class="ai-setup-step">
+            <div class="ai-step-num">1</div>
+            <div>
+                <b>Get Free API Key</b><br>
+                <a href="https://aistudio.google.com/apikey" target="_blank"
+                   style="color:#6C5CE7;font-weight:700;font-size:15px">🔗 Open Google AI Studio →</a><br>
+                <small>Sign in with Google → Click "Create API Key" → Copy it</small>
+                <div style="background:#e8f5e9;border-radius:6px;padding:8px;margin-top:8px">
+                    <small>✅ <b>Free:</b> 15 req/min, 1500/day — no credit card needed!</small>
+                </div>
+            </div>
+        </div>
+        <div class="ai-setup-step">
+            <div class="ai-step-num">2</div>
+            <div style="flex:1">
+                <b>Paste Your API Key</b><br>
+                <input type="password" id="setup-api-key" class="form-control"
+                       placeholder="Paste your Gemini API key here (AIza...)" style="margin-top:6px">
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:20px">
+            <button class="btn btn-primary btn-lg" onclick="aiApp.completeSetup()"
+                    style="background:#6C5CE7;border:none;padding:10px 40px">
+                ✅ Complete Setup
+            </button>
+            <br><br>
+            <a href="#" onclick="document.getElementById('ai-setup-modal').style.display='none';return false"
+               style="color:#999;font-size:12px">Skip for now (configure later in Settings)</a>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+var aiApp = {
+    pendingCmd: null,
+
+    set: function(t) {
+        var i = document.getElementById("ai-input");
+        if (!i) return;
+        i.value = t; i.focus();
+        i.setSelectionRange(t.length, t.length);
+    },
+
+    addMsg: function(html, type) {
+        type = type || "bot";
+        var c = document.getElementById("ai-chat");
+        if (!c) return;
+        var d = document.createElement("div");
+        d.className = "ai-msg ai-" + type;
+        d.innerHTML = '<div class="ai-av">' + (type === "user" ? "👤" : "🧠") + '</div><div class="ai-bub">' + html + '</div>';
+        c.appendChild(d);
+        c.scrollTop = c.scrollHeight;
+    },
+
+    addLoading: function() {
+        var c = document.getElementById("ai-chat");
+        if (!c) return;
+        var d = document.createElement("div");
+        d.className = "ai-msg ai-bot"; d.id = "ai-loading";
+        d.innerHTML = '<div class="ai-av">🧠</div><div class="ai-bub"><div class="ai-dots"><span></span><span></span><span></span></div> Processing with Gemini AI...</div>';
+        c.appendChild(d); c.scrollTop = c.scrollHeight;
+    },
+
+    removeLoading: function() { var e = document.getElementById("ai-loading"); if (e) e.remove(); },
+
+    esc: function(t) { if (!t) return ""; var d = document.createElement("div"); d.textContent = t; return d.innerHTML; },
+
+    send: function() {
+        var self = this;
+        var input = document.getElementById("ai-input");
+        var cmd = (input.value || "").trim();
+        if (!cmd) return;
+        self.addMsg(self.esc(cmd), "user");
+        input.value = "";
+        self.addLoading();
+        document.getElementById("ai-send").disabled = true;
+
+        frappe.call({
+            method: "frappe_ai_architect.api.ai_endpoint.process_command",
+            args: { command: cmd, confirmed: false },
+            freeze: false,
+            callback: function(r) {
+                self.removeLoading();
+                document.getElementById("ai-send").disabled = false;
+                self.handleResp(r.message, cmd);
+            },
+            error: function(e) {
+                self.removeLoading();
+                document.getElementById("ai-send").disabled = false;
+                self.addMsg('<div class="ai-err">❌ Error: ' + (e.message || "Something went wrong") + '</div>');
+            }
+        });
+    },
+
+    handleResp: function(d, cmd) {
+        if (!d) { this.addMsg('<div class="ai-err">❌ No response</div>'); return; }
+        if (d.status === "success" || d.status === "partial") { this.renderResults(d); }
+        else if (d.status === "confirmation_required") { this.showConfirm(d, cmd); }
+        else if (d.status === "clarification_needed") { this.renderClarify(d); }
+        else if (d.status === "setup_required") {
+            document.getElementById("ai-setup-modal").style.display = "flex";
+            this.addMsg('<div class="ai-info">🔧 API key not configured. Complete setup above.</div>');
+        }
+        else if (d.status === "validation_error") {
+            var errs = (d.errors || []).map(function(e) { return "• " + aiApp.esc(e); }).join("<br>");
+            this.addMsg('<div class="ai-err"><b>❌ Validation Error</b><br>' + errs + '</div>');
+        }
+        else { this.addMsg('<div class="ai-err">❌ ' + this.esc(d.message || d.description || "Unknown error") + '</div>'); }
+    },
+
+    renderResults: function(d) {
+        var h = '<div class="ai-result">';
+        h += '<div class="ai-res-head ' + (d.status === "success" ? "ai-ok" : "ai-warn") + '">';
+        h += (d.status === "success" ? "✅ Operation Successful" : "⚠️ Partially Completed") + '</div>';
+        if (d.description) h += '<p>' + this.esc(d.description) + '</p>';
+        var results = d.results || [];
+        for (var i = 0; i < results.length; i++) {
+            var r = results[i];
+            h += '<div class="ai-step-r ' + r.status + '">' + (r.status === "success" ? "✅" : "❌") + ' <b>' + (r.action || "") + '</b>';
+            if (r.result && r.result.message) h += ' — ' + this.esc(r.result.message);
+            if (r.result && r.result.url) h += ' <a href="' + r.result.url + '" class="btn btn-xs btn-primary" target="_blank">Open →</a>';
+            if (r.error) h += '<div class="ai-err-sm">' + this.esc(r.error) + '</div>';
+            h += '</div>';
+        }
+        if (d.backup_id) h += '<div class="ai-backup">🛡️ Backup: <code>' + d.backup_id + '</code> <button class="btn btn-xs btn-warning" onclick="aiApp.doRollback(\'' + d.backup_id + '\')">↩️ Rollback</button></div>';
+        if (d.suggestions && d.suggestions.length) {
+            h += '<div class="ai-sugg"><b>📌 Suggestions:</b><br>';
+            for (var j = 0; j < d.suggestions.length; j++) {
+                var s = d.suggestions[j];
+                h += '<span class="ai-sugg-item" onclick="aiApp.set(\'' + this.esc(s).replace(/'/g, "\\'") + '\')">' + this.esc(s) + '</span> ';
+            }
+            h += '</div>';
+        }
+        if (d.warnings && d.warnings.length) {
+            h += '<div class="ai-warn-box">';
+            for (var k = 0; k < d.warnings.length; k++) h += '<div>⚠️ ' + this.esc(d.warnings[k]) + '</div>';
+            h += '</div>';
+        }
+        h += '</div>';
+        this.addMsg(h);
+    },
+
+    renderClarify: function(d) {
+        var h = '<div class="ai-clarify"><b>🤔 Need more details:</b><br>' + this.esc(d.message || "");
+        if (d.suggestions && d.suggestions.length) {
+            h += '<div class="ai-sugg">';
+            for (var i = 0; i < d.suggestions.length; i++) {
+                var s = d.suggestions[i];
+                h += '<span class="ai-sugg-item" onclick="aiApp.set(\'' + this.esc(s).replace(/'/g, "\\'") + '\')">' + this.esc(s) + '</span> ';
+            }
+            h += '</div>';
+        }
+        h += '</div>';
+        this.addMsg(h);
+    },
+
+    showConfirm: function(d, cmd) {
+        this.pendingCmd = cmd;
+        var p = d.plan || {};
+        var body = '<p>' + this.esc(p.description || d.message || "") + '</p>';
+        if (p.impact) body += '<p><b>Impact:</b> ' + this.esc(p.impact) + '</p>';
+        var steps = p.steps || [];
+        for (var i = 0; i < steps.length; i++) {
+            var s = steps[i];
+            body += '<div class="ai-step-r">Step ' + s.step + ': <b>' + (s.action || "") + '</b> — ' + this.esc(s.description || "") + '</div>';
+        }
+        var warns = p.warnings || [];
+        for (var j = 0; j < warns.length; j++) body += '<div class="ai-warn-sm">⚠️ ' + this.esc(warns[j]) + '</div>';
+        document.getElementById("ai-modal-body").innerHTML = body;
+        document.getElementById("ai-modal").style.display = "flex";
+    },
+
+    confirmExec: function() {
+        var self = this;
+        document.getElementById("ai-modal").style.display = "none";
+        if (!self.pendingCmd) return;
+        self.addLoading();
+        frappe.call({
+            method: "frappe_ai_architect.api.ai_endpoint.process_command",
+            args: { command: self.pendingCmd, confirmed: true },
+            freeze: false,
+            callback: function(r) { self.removeLoading(); self.handleResp(r.message, self.pendingCmd); self.pendingCmd = null; },
+            error: function(e) { self.removeLoading(); self.addMsg('<div class="ai-err">❌ ' + (e.message || "Error") + '</div>'); self.pendingCmd = null; }
+        });
+    },
+
+    cancelConfirm: function() {
+        document.getElementById("ai-modal").style.display = "none";
+        this.addMsg('<div class="ai-info">❌ Cancelled.</div>');
+        this.pendingCmd = null;
+    },
+
+    doRollback: function(id) {
+        var self = this;
+        if (!confirm("Rollback this operation?")) return;
+        frappe.call({
+            method: "frappe_ai_architect.api.ai_endpoint.rollback",
+            args: { backup_id: id },
+            callback: function(r) {
+                if (r.message && r.message.status === "success") self.addMsg('<div class="ai-ok-msg">✅ Rolled back!</div>');
+                else self.addMsg('<div class="ai-err">❌ Failed: ' + (r.message ? r.message.message : "") + '</div>');
+            }
+        });
+    },
+
+    showHistory: function() {
+        var self = this;
+        frappe.call({
+            method: "frappe_ai_architect.api.ai_endpoint.get_command_history",
+            args: { limit: 10 },
+            callback: function(r) {
+                var logs = r.message || [];
+                var h = '<div class="ai-hist"><b>📜 Recent:</b>';
+                if (!logs.length) h += '<p>No history yet.</p>';
+                for (var i = 0; i < logs.length; i++) {
+                    var l = logs[i];
+                    var ic = l.status === "Success" ? "✅" : l.status === "Failed" ? "❌" : "⚠️";
+                    h += '<div class="ai-hist-item" onclick="aiApp.set(\'' + self.esc(l.command || "").replace(/'/g, "\\'") + '\')">' + ic + ' ' + self.esc(l.command || "") + ' <small>' + (l.creation || "") + '</small></div>';
+                }
+                h += '</div>';
+                self.addMsg(h);
+            },
+            error: function() { self.addMsg('<div class="ai-info">History not available.</div>'); }
+        });
+    },
+
+    showSiteInfo: function() {
+        var self = this;
+        frappe.call({
+            method: "frappe_ai_architect.api.ai_endpoint.get_site_info",
+            callback: function(r) {
+                var i = r.message;
+                self.addMsg('<div class="ai-site"><b>ℹ️ Site Info</b><table class="table table-sm">' +
+                    '<tr><td>Site</td><td><code>' + (i.site_name || "") + '</code></td></tr>' +
+                    '<tr><td>Frappe</td><td><code>' + (i.frappe_version || "") + '</code></td></tr>' +
+                    '<tr><td>User</td><td>' + (i.user || "") + '</td></tr>' +
+                    '<tr><td>Model</td><td><code>gemini-2.5-flash</code></td></tr>' +
+                    '<tr><td>Apps</td><td>' + (i.installed_apps || []).join(", ") + '</td></tr>' +
+                    '<tr><td>Custom DocTypes</td><td>' + (i.custom_doctypes || []).length + '</td></tr>' +
+                    '</table></div>');
+            },
+            error: function() { self.addMsg('<div class="ai-err">Cannot load info</div>'); }
+        });
+    },
+
+    completeSetup: function() {
+        var self = this;
+        var key = document.getElementById("setup-api-key").value.trim();
+        if (!key) { frappe.msgprint("Please paste your API key!"); return; }
+        frappe.call({
+            method: "frappe.client.set_value",
+            args: { doctype: "AI Architect Settings", name: "AI Architect Settings",
+                    fieldname: { api_key: key, model: "gemini-2.5-flash", is_setup_complete: 1 } },
+            freeze: true, freeze_message: "Saving...",
+            callback: function() {
+                document.getElementById("ai-setup-modal").style.display = "none";
+                self.addMsg('<div class="ai-ok-msg">🎉 <b>Setup Complete!</b> AI Architect is ready. Try a command below!</div>');
+                frappe.show_alert({ message: "✅ Configured!", indicator: "green" }, 5);
+            },
+            error: function(e) { frappe.msgprint("Error: " + (e.message || "Unknown")); }
+        });
+    }
+};
+
+frappe.ready(function() {
+    frappe.call({
+        method: "frappe_ai_architect.api.ai_endpoint.check_setup",
+        callback: function(r) {
+            if (r.message && !r.message.api_configured) {
+                document.getElementById("ai-setup-modal").style.display = "flex";
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

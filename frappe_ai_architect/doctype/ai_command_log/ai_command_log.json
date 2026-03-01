@@ -1,0 +1,124 @@
+{
+    "actions": [],
+    "autoname": "AI-CMD-.#####",
+    "creation": "2025-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "command",
+        "cb_1",
+        "status",
+        "operation_type",
+        "operation_id",
+        "ai_response_section",
+        "ai_response",
+        "execution_section",
+        "execution_result",
+        "backup_section",
+        "backup_data"
+    ],
+    "fields": [
+        {
+            "bold": 1,
+            "fieldname": "command",
+            "fieldtype": "Small Text",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Command"
+        },
+        {
+            "fieldname": "cb_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "default": "Pending",
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "options": "\nPending\nSuccess\nPartial\nFailed\nBackup Created\nRolled Back"
+        },
+        {
+            "fieldname": "operation_type",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Operation Type"
+        },
+        {
+            "fieldname": "operation_id",
+            "fieldtype": "Data",
+            "label": "Operation ID"
+        },
+        {
+            "collapsible": 1,
+            "fieldname": "ai_response_section",
+            "fieldtype": "Section Break",
+            "label": "AI Response"
+        },
+        {
+            "fieldname": "ai_response",
+            "fieldtype": "Code",
+            "label": "AI Response JSON",
+            "options": "JSON"
+        },
+        {
+            "collapsible": 1,
+            "fieldname": "execution_section",
+            "fieldtype": "Section Break",
+            "label": "Execution Result"
+        },
+        {
+            "fieldname": "execution_result",
+            "fieldtype": "Code",
+            "label": "Execution Result JSON",
+            "options": "JSON"
+        },
+        {
+            "collapsible": 1,
+            "fieldname": "backup_section",
+            "fieldtype": "Section Break",
+            "label": "Backup Data"
+        },
+        {
+            "fieldname": "backup_data",
+            "fieldtype": "Code",
+            "label": "Backup Data JSON",
+            "options": "JSON"
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "links": [],
+    "modified": "2025-01-01 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Frappe AI Architect",
+    "name": "AI Command Log",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "export": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "export": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Administrator",
+            "write": 1
+        }
+    ],
+    "search_fields": "command,status,operation_type",
+    "sort_field": "creation",
+    "sort_order": "DESC",
+    "states": [],
+    "title_field": "command",
+    "track_changes": 1
+}
